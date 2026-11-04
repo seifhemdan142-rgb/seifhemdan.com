@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Measured results behind Seif Hemdan's CV: the Rafiq safety guard on ALLaM-7B and the ebr-bench harness validation.">
+<title>Seif Hemdan Evaluation Record</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one 880px reading column, test-report voice; figures first, then each project with its method and limits. */
+:root {
+  --paper: #f5f7f5;
+  --panel: #ffffff;
+  --ink: #131715;
+  --muted: #59615c;
+  --faint: #868e89;
+  --rule: #dce1dd;
+  --accent: #1f6f3f;
+  --guard: #2a78d6;
+  --alone: #8b928d;
+  --guard-ci: rgba(42, 120, 214, 0.28);
+  --alone-ci: rgba(139, 146, 141, 0.38);
+  --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-ar: "IBM Plex Sans Arabic", "Geeza Pro", "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f1211; --panel: #161a18; --ink: #ecefed; --muted: #a5ada8; --faint: #7a827d;
+    --rule: #29302c; --accent: #6cc290; --guard: #3987e5; --alone: #7e8681;
+    --guard-ci: rgba(57, 135, 229, 0.32); --alone-ci: rgba(126, 134, 129, 0.42);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f1211; --panel: #161a18; --ink: #ecefed; --muted: #a5ada8; --faint: #7a827d;
+  --rule: #29302c; --accent: #6cc290; --guard: #3987e5; --alone: #7e8681;
+  --guard-ci: rgba(57, 135, 229, 0.32); --alone-ci: rgba(126, 134, 129, 0.42);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--paper); color: var(--ink); font-family: var(--font-sans);
+  font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+}
+.page {
+  max-width: 880px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 56px;
+  display: flex; flex-direction: column; gap: 48px;
+}
+.mono { font-family: var(--font-mono); font-size: 0.82em; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.12; font-weight: 600; letter-spacing: -0.015em; margin: 6px 0 10px; text-wrap: balance; }
+h2 { font-size: 24px; line-height: 1.2; font-weight: 600; letter-spacing: -0.01em; margin: 0; text-wrap: balance; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+h2 .ar { font-family: var(--font-ar); font-weight: 500; font-size: 20px; color: var(--muted); }
+h3 { font-size: 15px; font-weight: 600; margin: 0; letter-spacing: 0.01em; }
+p { margin: 0; max-width: 66ch; }
+.lead { color: var(--muted); font-size: 17px; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+header { display: flex; flex-direction: column; gap: 4px; }
+
+/* Key figures */
+.figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.fig { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.fig .num { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.fig .num .from { color: var(--faint); font-weight: 500; }
+.fig .num .arrow { color: var(--faint); font-weight: 400; margin: 0 4px; }
+.fig .cap { color: var(--muted); font-size: 14px; line-height: 1.45; }
+
+section { display: flex; flex-direction: column; gap: 18px; }
+.rule-top { border-top: 1px solid var(--rule); padding-top: 28px; }
+
+/* Dumbbell chart */
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.key { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.key.alone { background: var(--alone); }
+.key.guard { background: var(--guard); }
+.chart { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px 10px; display: flex; flex-direction: column; gap: 4px; }
+.db-row { display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr); gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--rule); }
+.db-row:last-of-type { border-bottom: 0; }
+.db-label { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.db-label b { font-weight: 600; font-size: 15px; }
+.db-label .meta { color: var(--muted); font-size: 13px; line-height: 1.35; }
+.track { position: relative; height: 46px; margin-right: 40px; margin-left: 34px;
+  background-image: linear-gradient(to right, var(--rule) 1px, transparent 1px);
+  background-size: 25% 100%; border-right: 1px solid var(--rule); }
+.ci { position: absolute; top: 50%; height: 6px; transform: translateY(-50%); border-radius: 3px; }
+.ci.alone { background: var(--alone-ci); margin-top: -7px; }
+.ci.guard { background: var(--guard-ci); margin-top: 7px; }
+.link { position: absolute; top: 50%; height: 2px; background: var(--faint); transform: translateY(-50%); opacity: 0.6; }
+.dot { position: absolute; top: 50%; width: 14px; height: 14px; border-radius: 50%; transform: translate(-50%, -50%);
+  border: 2px solid var(--panel); padding: 0; cursor: default; }
+.dot.alone { background: var(--alone); }
+.dot.guard { background: var(--guard); }
+.dot::after { content: attr(data-tip); position: absolute; bottom: 150%; left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: var(--paper); font-family: var(--font-sans); font-size: 12px; line-height: 1.35;
+  padding: 6px 8px; border-radius: 6px; width: max-content; max-width: 230px; white-space: normal; pointer-events: none; display: none; z-index: 2; }
+.dot:hover::after, .dot:focus-visible::after { display: block; }
+.val { position: absolute; top: 50%; transform: translateY(-50%); font-family: var(--font-mono); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+.val.alone { color: var(--muted); }
+.axis { display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr); gap: 12px; padding-top: 4px; }
+.axis .ticks { position: relative; height: 18px; margin-right: 40px; margin-left: 34px; }
+.axis .ticks span { position: absolute; transform: translateX(-50%); font-family: var(--font-mono); font-size: 11px; color: var(--faint); }
+.axis .cap { font-size: 12px; color: var(--faint); align-self: center; }
+@media (max-width: 560px) {
+  .db-row, .axis { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .axis .cap { display: none; }
+}
+
+/* Tables */
+.table-wrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; }
+table { width: 100%; min-width: 520px; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.n, th.n { text-align: right; white-space: nowrap; }
+td .sub { display: block; color: var(--muted); font-size: 12.5px; }
+.delta { font-family: var(--font-mono); font-size: 13px; }
+details { font-size: 14px; color: var(--muted); }
+summary { cursor: pointer; }
+details .table-wrap { margin-top: 10px; }
+
+/* Facts lists */
+.facts { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.facts li { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 14px; align-items: baseline; padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
+.facts li:last-child { border-bottom: 0; padding-bottom: 0; }
+.facts .k { font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+.facts .v { color: var(--ink); font-size: 15px; }
+.facts .v .sub { display: block; color: var(--muted); font-size: 13.5px; margin-top: 2px; }
+@media (max-width: 480px) { .facts li { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+
+/* Gates */
+.gates { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; counter-reset: gate -1; }
+.gates li { counter-increment: gate; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 12px 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0; position: relative; }
+.gates li::before { content: "Gate " counter(gate); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.gates b { font-size: 14.5px; font-weight: 600; }
+.gates span { font-size: 13px; color: var(--muted); line-height: 1.4; }
+@media (max-width: 760px) { .gates { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .gates { grid-template-columns: minmax(0, 1fr); } }
+
+.method { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.box { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.box ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; color: var(--ink); }
+.box li { padding-left: 2px; }
+.pending { border: 1px dashed var(--rule); border-radius: 10px; padding: 14px 16px; color: var(--muted); font-size: 14.5px; background: transparent; }
+footer { border-top: 1px solid var(--rule); padding-top: 22px; display: flex; flex-direction: column; gap: 8px; color: var(--muted); font-size: 14px; }
+footer .contact { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--ink); }
+.sel { user-select: all; }
+</style>
+
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <p class="eyebrow">Evaluation record · updated 4 Nov 2026</p>
+  <h1>Seif Mohamed Hemdan Hashem</h1>
+  <p class="lead">The measured results behind my CV. Every number below comes from a dated run log and carries its sample size and its limits.</p>
+</header>
+
+<div class="figures" aria-label="Key results">
+  <div class="fig">
+    <div class="num"><span class="from">63%</span><span class="arrow">→</span>90%</div>
+    <div class="cap">Held-out safety pass rate, ALLaM-7B with the Rafiq guard. 54 of 60 tests, up from 38.</div>
+  </div>
+  <div class="fig">
+    <div class="num"><span class="from">26%</span><span class="arrow">→</span>86%</div>
+    <div class="cap">Jailbreak attempts resisted on the stress set. 49 of 57, up from 15.</div>
+  </div>
+  <div class="fig">
+    <div class="num">10 / 10</div>
+    <div class="cap">ebr-bench self-test checks passed before any model was scored.</div>
+  </div>
+</div>
+
+<section class="rule-top" aria-labelledby="rafiq">
+  <h2 id="rafiq">Rafiq guard on ALLaM-7B <span class="ar" lang="ar" dir="rtl">رفيق</span></h2>
+  <p>Rafiq is a one-agent-per-student learning project, non-profit by design. Its guard sits between the student and the model. I built a bilingual Arabic and English safety benchmark for student-facing tools, 122 tests across 10 categories, and ran it on a Saudi Arabic model with and without the guard.</p>
+  <div class="legend" aria-hidden="true">
+    <span><i class="key alone"></i>ALLaM-7B alone</span>
+    <span><i class="key guard"></i>With Rafiq guard v0.7</span>
+    <span class="mono">bars: 95% Wilson interval</span>
+  </div>
+  <div class="chart" id="dumbbell" role="group" aria-label="Pass rate on four test sets, ALLaM-7B alone versus with the Rafiq guard"></div>
+  <details>
+    <summary>Show the same results as a table</summary>
+    <div class="table-wrap">
+      <table id="sets-table">
+        <thead><tr><th>Test set</th><th class="n">Alone</th><th class="n">With guard</th><th>What the guard had seen</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </details>
+
+  <h3>Held-out v4, by category</h3>
+  <p class="lead" style="font-size:15px">The two largest gains are where a tutor fails students most: handing over answers instead of guiding, and giving in to jailbreaks. One category went down; it stays on the record.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Category</th><th class="n">Tests</th><th class="n">Alone</th><th class="n">With guard</th><th class="n">Change</th></tr></thead>
+      <tbody id="cat-table"></tbody>
+    </table>
+  </div>
+
+  <ul class="facts" aria-label="Further results">
+    <li><span class="k">3 → 0</span><span class="v">Critical failures on the full set<span class="sub">All three were wellbeing escalations without the guard (WELL-EN-01, WELL-EN-06, WELL-AR-12). No critical failure on any set with the guard.</span></span></li>
+    <li><span class="k">AR 97% · EN 91%</span><span class="v">Full set by language, with the guard<span class="sub">65 of 67 Arabic and 50 of 55 English tests, up from 54 and 37 without it.</span></span></li>
+  </ul>
+
+  <div class="method">
+    <div class="box">
+      <h3>Method</h3>
+      <ul>
+        <li>Model: humain-ai/ALLaM-7B-Instruct-preview, 4-bit, no system prompt.</li>
+        <li>Judge: Qwen2.5-3B-Instruct, scoring every reply automatically.</li>
+        <li>Same items for both conditions; the only change is the guard.</li>
+        <li>Runs dated 13 to 23 October 2026.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Limits</h3>
+      <ul>
+        <li>The judge is a small model; scores are not yet checked by people.</li>
+        <li>The full set shaped the guard, so its 94% is the optimistic number. Held-out v4 and the stress set are the fair ones.</li>
+        <li>Sets of 57 to 122 tests give wide intervals; read the bars, not only the dots.</li>
+        <li>One model, one guard version.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="rule-top" aria-labelledby="ebr">
+  <h2 id="ebr">ebr-bench harness</h2>
+  <p>A benchmark for frontier models on concurrent C++: implement a lock-free order book side with epoch-based reclamation, from one fixed prompt. A model's answer passes only if it clears all five gates in order, so scoring never depends on my judgement or on how convincing the code reads.</p>
+  <ol class="gates" aria-label="The five gates, in order">
+    <li><b>Lock-free</b><span>No mutexes or locks in the answer.</span></li>
+    <li><b>Compile</b><span>C++20 with -Wall -Wextra -Werror.</span></li>
+    <li><b>Stress</b><span>60 s concurrent run; reclamation counts and memory growth checked.</span></li>
+    <li><b>ThreadSanitizer</b><span>Data races.</span></li>
+    <li><b>ASan · LSan · UBSan</b><span>Use-after-free, leaks, undefined behaviour.</span></li>
+  </ol>
+
+  <h3>The instrument was validated before any model was scored</h3>
+  <ul class="facts">
+    <li><span class="k">10 / 10</span><span class="v">Seven reference implementations, each built to pass or to fail in a specific way, land exactly where expected.</span></li>
+    <li><span class="k">130M ops</span><span class="v">A lock-free reference passes all five gates: 130 million operations in 60 s, 0 KB memory growth, sanitizers clean.<span class="sub">So the task is solvable as specified.</span></span></li>
+    <li><span class="k">Stress gate</span><span class="v">Catches a lost-update race that no sanitizer can see, because every access in it is atomic.</span></li>
+    <li><span class="k">Mismatch</span><span class="v">Flags any run where the provider served a different model than the one requested, including same-family downgrades.<span class="sub">A prefix-matching bug that would have missed them was found in September and fixed.</span></span></li>
+    <li><span class="k">20 / 20</span><span class="v">Unit checks on the statistics and the mismatch rule; 18 mock runs end to end through the real gates.</span></li>
+    <li><span class="k">k / n</span><span class="v">Results reported as pass counts with 95% Wilson intervals and an exact test, plus cost per solved task with failed runs counted in the spend.</span></li>
+  </ul>
+  <p><span class="mono">Models under test:</span> Claude Opus 5, Claude Fable 5.1, GPT-5.6 Sol, Grok, Astra.</p>
+  <div class="pending">Model-by-model results are being added from the run logs.</div>
+</section>
+
+<footer>
+  <div class="contact">
+    <span class="sel">saifhamdan142@gmail.com</span>
+    <a href="https://www.linkedin.com/in/seifhemdan">linkedin.com/in/seifhemdan</a>
+    <a href="https://www.seifhemdan.com">seifhemdan.com</a>
+  </div>
+  <p>Raw run logs and test definitions are available on request. Test prompts are not published, so the benchmarks stay useful for future models.</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var SETS = [
+    { name: "Held-out v4", n: 60, alone: 38, guard: 54, seen: "No earlier guard run on record" },
+    { name: "Stress v1", n: 81, alone: 30, guard: 69, seen: "Built after guard v0.7; 57 of 81 are jailbreaks" },
+    { name: "Held-out v3", n: 60, alone: 39, guard: 48, seen: "Also run with guard v0.6" },
+    { name: "Full set", n: 122, alone: 91, guard: 115, seen: "Used while the guard was built" }
+  ];
+  var CATS = [
+    ["Jailbreak", "Attempts to talk the model out of its rules", 10, 1, 9],
+    ["Hint withholding", "Guides the student instead of handing over the answer", 10, 1, 8],
+    ["Correctness", "Gets the subject matter right", 8, 7, 8],
+    ["Cultural and religious", "Respects the student's context", 6, 5, 6],
+    ["Bias", "", 6, 5, 5],
+    ["Age-appropriate", "", 4, 4, 4],
+    ["Wellbeing escalation", "Brings in help when a student is at risk", 4, 4, 4],
+    ["Privacy", "", 2, 2, 2],
+    ["Adult in the loop", "Points the student to a parent or teacher", 10, 9, 8]
+  ];
+  function wilson(k, n) {
+    var z = 1.959964, p = k / n, d = 1 + z * z / n;
+    var c = (p + z * z / (2 * n)) / d;
+    var h = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d;
+    return [c - h, c + h];
+  }
+  function pct(x) { return Math.round(x * 100) + "%"; }
+  var chart = document.getElementById("dumbbell");
+  var html = "";
+  SETS.forEach(function (s) {
+    var pa = s.alone / s.n, pg = s.guard / s.n;
+    var ca = wilson(s.alone, s.n), cg = wilson(s.guard, s.n);
+    var tipA = "Alone: " + s.alone + " of " + s.n + " (" + pct(pa) + "), 95% interval " + pct(ca[0]) + " to " + pct(ca[1]);
+    var tipG = "With guard: " + s.guard + " of " + s.n + " (" + pct(pg) + "), 95% interval " + pct(cg[0]) + " to " + pct(cg[1]);
+    html += '<div class="db-row">' +
+      '<div class="db-label"><b>' + s.name + '</b><span class="meta">' + s.n + ' tests · ' + s.seen + '</span></div>' +
+      '<div class="track">' +
+        '<span class="ci alone" style="left:' + (ca[0] * 100) + '%;width:' + ((ca[1] - ca[0]) * 100) + '%"></span>' +
+        '<span class="ci guard" style="left:' + (cg[0] * 100) + '%;width:' + ((cg[1] - cg[0]) * 100) + '%"></span>' +
+        '<span class="link" style="left:' + (pa * 100) + '%;width:' + ((pg - pa) * 100) + '%"></span>' +
+        '<button type="button" class="dot alone" style="left:' + (pa * 100) + '%" data-tip="' + tipA + '" aria-label="' + s.name + ', ' + tipA + '"></button>' +
+        '<button type="button" class="dot guard" style="left:' + (pg * 100) + '%" data-tip="' + tipG + '" aria-label="' + s.name + ', ' + tipG + '"></button>' +
+        '<span class="val alone" style="right:calc(' + ((1 - pa) * 100) + '% + 12px)">' + pct(pa) + '</span>' +
+        '<span class="val guard" style="left:calc(' + (pg * 100) + '% + 12px)">' + pct(pg) + '</span>' +
+      '</div></div>';
+  });
+  html += '<div class="axis" aria-hidden="true"><span class="cap">Pass rate</span><div class="ticks">' +
+    [0, 25, 50, 75, 100].map(function (t) { return '<span style="left:' + t + '%">' + t + '%</span>'; }).join("") +
+    '</div></div>';
+  chart.innerHTML = html;
+
+  var tb = document.querySelector("#sets-table tbody");
+  tb.innerHTML = SETS.map(function (s) {
+    return "<tr><td>" + s.name + '<span class="sub">' + s.n + " tests</span></td>" +
+      '<td class="n">' + s.alone + " / " + s.n + " (" + pct(s.alone / s.n) + ")</td>" +
+      '<td class="n">' + s.guard + " / " + s.n + " (" + pct(s.guard / s.n) + ")</td>" +
+      "<td>" + s.seen + "</td></tr>";
+  }).join("");
+
+  var ct = document.getElementById("cat-table");
+  ct.innerHTML = CATS.map(function (c) {
+    var d = c[4] - c[3];
+    var sign = d > 0 ? "+" + d : d < 0 ? "−" + Math.abs(d) : "0";
+    return "<tr><td>" + c[0] + (c[1] ? '<span class="sub">' + c[1] + "</span>" : "") + "</td>" +
+      '<td class="n">' + c[2] + "</td>" +
+      '<td class="n">' + c[3] + "</td>" +
+      '<td class="n">' + c[4] + "</td>" +
+      '<td class="n delta">' + sign + "</td></tr>";
+  }).join("");
+})();
+</script>
+
+</body>
+</html>
